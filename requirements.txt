@@ -1,2 +1,0 @@
-flatdict==1.2.0
-pyyaml==3.11
