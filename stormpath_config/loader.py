@@ -1,3 +1,6 @@
+from .helpers import _extend_dict
+
+
 """Configuration Loader."""
 
 
@@ -34,6 +37,8 @@ class ConfigLoader(object):
 
             for strategy in self.post_processing_strategies:
                 config = strategy.process(config)
+
+        config = _extend_dict(config, config.pop('stormpath', {}))
 
         for strategy in self.validation_strategies:
             config = strategy.process(config)
