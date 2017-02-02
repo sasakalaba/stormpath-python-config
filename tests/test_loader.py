@@ -90,8 +90,71 @@ class ConfigLoaderTest(TestCase):
         self.client_config['application']['name'] = 'STORMPATH_KEY_APP'
         self.load_strategies[6] = ExtendConfigStrategy(
             extend_with={'stormpath': self.client_config})
-        cl = ConfigLoader(self.load_strategies, self.post_processing_strategies, self.validation_strategies)
+        cl = ConfigLoader(
+            self.load_strategies,
+            self.post_processing_strategies,
+            self.validation_strategies
+        )
         config = cl.load()
 
         self.assertEqual(config['application']['name'], 'STORMPATH_KEY_APP')
         self.assertFalse('stormpath' in config)
+
+
+class OverridingStrategiesTest(TestCase):
+    """
+    This testing class will simulate the loading process for stormpath-flask.
+    """
+    def setUp(self):
+        self.client_config = {}
+
+    def test_strategies_override_01(self):
+        # Ensure that original config file is loaded.
+
+        # cl = ConfigLoader(
+        #     self.load_strategies,
+        #     self.post_processing_strategies,
+        #     self.validation_strategies
+        # )
+        # config = cl.load()
+        pass
+
+    def test_strategies_override_02(self):
+        # Ensure that apiKey.properties file from HOME directory will override
+        # any settings from previous config sources.
+        pass
+
+    def test_strategies_override_03(self):
+        # Ensure that stormpath.json file from HOME stormpath directory will
+        # override any settings from previous config sources.
+        pass
+
+    def test_strategies_override_04(self):
+        # Ensure that stormpath.yaml file from HOME stormpath directory will
+        # override any settings from previous config sources.
+        pass
+
+    def test_strategies_override_05(self):
+        # Ensure that apiKey.properties file will override any settings from
+        # previous config sources.
+        pass
+
+    def test_strategies_override_06(self):
+        # Ensure that stormpath.json file will override any settings from
+        # previous config sources.
+        pass
+
+    def test_strategies_override_07(self):
+        # Ensure that stormpath.yaml file will override any settings from
+        # previous config sources.
+        pass
+
+    def test_strategies_override_08(self):
+        # Ensure that stormpath environment variables will override any
+        # settings from previous config sources.
+        pass
+
+    def test_strategies_override_09(self):
+        # Ensure that client constructor settings will override any settings
+        # from previous config sources.
+        pass
