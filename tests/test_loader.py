@@ -62,6 +62,7 @@ class ConfigLoaderTest(TestCase):
             # empty, then a apiKey.properties file should be loaded
             # from that path.
             LoadAPIKeyFromConfigStrategy(),
+            MoveAPIKeyToClientAPIKeyStrategy()
         ]
         self.validation_strategies = [
             # Post-processing: Validation

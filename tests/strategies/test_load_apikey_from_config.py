@@ -6,7 +6,8 @@ from stormpath_config.strategies import (
     LoadEnvConfigStrategy,
     ExtendConfigStrategy,
     LoadAPIKeyFromConfigStrategy,
-    ValidateClientConfigStrategy)
+    ValidateClientConfigStrategy,
+    MoveAPIKeyToClientAPIKeyStrategy)
 
 
 class LoadAPIKeyFromConfigStrategyTest(TestCase):
@@ -26,7 +27,8 @@ class LoadAPIKeyFromConfigStrategyTest(TestCase):
             # 7. Configuration provided through the SDK client constructor.
             ExtendConfigStrategy(extend_with={})
         ]
-        post_processing_strategies = [LoadAPIKeyFromConfigStrategy()]
+        post_processing_strategies = [
+            LoadAPIKeyFromConfigStrategy(), MoveAPIKeyToClientAPIKeyStrategy()]
         validation_strategies = [ValidateClientConfigStrategy()]
 
         cl = ConfigLoader(

@@ -9,7 +9,8 @@ from stormpath_config.strategies import ExtendConfigStrategy, \
     LoadAPIKeyFromConfigStrategy, \
     LoadEnvConfigStrategy, \
     LoadFileConfigStrategy, \
-    ValidateClientConfigStrategy
+    ValidateClientConfigStrategy, \
+    MoveAPIKeyToClientAPIKeyStrategy
 
 
 class EdgeCasesTest(TestCase):
@@ -35,7 +36,8 @@ class EdgeCasesTest(TestCase):
             #    constructor.
             ExtendConfigStrategy(extend_with=client_config)
         ]
-        post_processing_strategies = [LoadAPIKeyFromConfigStrategy()]
+        post_processing_strategies = [
+            LoadAPIKeyFromConfigStrategy(), MoveAPIKeyToClientAPIKeyStrategy()]
         validation_strategies = [ValidateClientConfigStrategy()]
 
         cl = ConfigLoader(load_strategies, post_processing_strategies, validation_strategies)
@@ -66,7 +68,8 @@ class EdgeCasesTest(TestCase):
             LoadEnvConfigStrategy(prefix='STORMPATH'),
             ExtendConfigStrategy(extend_with={})
         ]
-        post_processing_strategies = [LoadAPIKeyFromConfigStrategy()]
+        post_processing_strategies = [
+            LoadAPIKeyFromConfigStrategy(), MoveAPIKeyToClientAPIKeyStrategy()]
         validation_strategies = [ValidateClientConfigStrategy()]
 
         cl = ConfigLoader(load_strategies, post_processing_strategies, validation_strategies)
@@ -101,7 +104,8 @@ class EdgeCasesTest(TestCase):
             #    constructor.
             ExtendConfigStrategy(extend_with=client_config)
         ]
-        post_processing_strategies = [LoadAPIKeyFromConfigStrategy()]
+        post_processing_strategies = [
+            LoadAPIKeyFromConfigStrategy(), MoveAPIKeyToClientAPIKeyStrategy()]
         validation_strategies = [ValidateClientConfigStrategy()]
 
         cl = ConfigLoader(load_strategies, post_processing_strategies, validation_strategies)
