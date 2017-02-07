@@ -108,16 +108,75 @@ class OverridingStrategiesTest(TestCase):
     def setUp(self):
         self.client_config = {}
 
+        self.post_processing_strategies = [
+            # Post-processing: If the key client.apiKey.file isn't
+            # empty, then a apiKey.properties file should be loaded
+            # from that path.
+            LoadAPIKeyFromConfigStrategy(),
+        ]
+        self.validation_strategies = [
+            # Post-processing: Validation
+            ValidateClientConfigStrategy()
+        ]    
+
+    def setLoadingStrategies(self, assets):
+        # Our custom strategy loader builder. The asses argument should be a 
+        # tuple with boolean values for enabling/disabling assets.
+
+        self.assertEqual(type(assets), tuple)
+        self.assertEqual(len(assets), 6)
+
+        load_strategies = [
+            # 1. Default configuration.
+            LoadFileConfigStrategy(
+                'tests/assets/default_config.yml' if assets[0] else 'empty', 
+                must_exist=True),
+
+            # 2. apiKey.properties file from ~/.stormpath directory.
+            LoadAPIKeyConfigStrategy(
+                'tests/assets/apiKey.properties' if assets[1] else 'empty'),
+
+            # 3. stormpath.[json or yaml] file from ~/.stormpath
+            #    directory.
+            LoadFileConfigStrategy(
+                'tests/assets/stormpath.yml' if assets[2] else 'empty'),
+
+            # 4. apiKey.properties file from application directory.
+            LoadAPIKeyConfigStrategy(
+                'tests/assets/no_apiKey.properties' if assets[3] else 'empty'),
+
+            # 5. stormpath.[json or yaml] file from application
+            #    directory.
+            LoadFileConfigStrategy(
+                'tests/assets/stormpath.json' if assets[4] else 'empty'),
+
+            # 6. Environment variables.
+            LoadEnvConfigStrategy(prefix='STORMPATH' if assets[5] else 'empty'),
+
+            # 7. Configuration provided through the SDK client
+            #    constructor.
+            ExtendConfigStrategy(extend_with=self.client_config)
+        ]
+        return load_strategies
+
     def test_strategies_override_01(self):
         # Ensure that original config file is loaded.
 
-        # cl = ConfigLoader(
-        #     self.load_strategies,
-        #     self.post_processing_strategies,
-        #     self.validation_strategies
-        # )
-        # config = cl.load()
-        pass
+        # Enable only the first asset.
+        load_strategies = self.setLoadingStrategies(
+            (True, False, False, False, False, False))
+        cl = ConfigLoader(
+            load_strategies,
+            self.post_processing_strategies,
+            self.validation_strategies
+        )
+
+        # Ensure that config file was loaded and an error was raised, since 
+        # our testing asset does not have apiKey credentials.
+        with self.assertRaises(ValueError) as error:
+            config = cl.load()
+        self.assertEqual(
+            error.exception.message, 'API key ID and secret are required.')
 
     def test_strategies_override_02(self):
         # Ensure that apiKey.properties file from HOME directory will override
