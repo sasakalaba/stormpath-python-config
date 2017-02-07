@@ -12,7 +12,8 @@ from stormpath_config.strategies import ExtendConfigStrategy, \
     LoadAPIKeyFromConfigStrategy, \
     LoadEnvConfigStrategy, \
     LoadFileConfigStrategy, \
-    ValidateClientConfigStrategy
+    ValidateClientConfigStrategy, \
+    MoveAPIKeyToClientAPIKeyStrategy
 
 
 class ConfigLoaderTest(TestCase):
@@ -106,114 +107,243 @@ class OverridingStrategiesTest(TestCase):
     This testing class will simulate the loading process for stormpath-flask.
     """
     def setUp(self):
-        self.client_config = {}
-
         self.post_processing_strategies = [
-            # Post-processing: If the key client.apiKey.file isn't
-            # empty, then a apiKey.properties file should be loaded
-            # from that path.
             LoadAPIKeyFromConfigStrategy(),
+            MoveAPIKeyToClientAPIKeyStrategy()
         ]
         self.validation_strategies = [
-            # Post-processing: Validation
             ValidateClientConfigStrategy()
-        ]    
+        ]
 
-    def setLoadingStrategies(self, assets):
-        # Our custom strategy loader builder. The asses argument should be a 
-        # tuple with boolean values for enabling/disabling assets.
-
-        self.assertEqual(type(assets), tuple)
-        self.assertEqual(len(assets), 6)
+    def setLoadingStrategies(self, assets={}):
+        # Our custom strategy loader builder.
 
         load_strategies = [
             # 1. Default configuration.
             LoadFileConfigStrategy(
-                'tests/assets/default_config.yml' if assets[0] else 'empty', 
-                must_exist=True),
+                assets.get('default_config', 'empty'), must_exist=True),
 
             # 2. apiKey.properties file from ~/.stormpath directory.
-            LoadAPIKeyConfigStrategy(
-                'tests/assets/apiKey.properties' if assets[1] else 'empty'),
+            LoadAPIKeyConfigStrategy(assets.get('home_apiKey', 'empty')),
 
-            # 3. stormpath.[json or yaml] file from ~/.stormpath
-            #    directory.
-            LoadFileConfigStrategy(
-                'tests/assets/stormpath.yml' if assets[2] else 'empty'),
+            # 3. stormpath.json file from ~/.stormpath directory.
+            LoadFileConfigStrategy(assets.get('home_stormpath_json', 'empty')),
+
+            # 3.1. stormpath.yaml file from ~/.stormpath directory.
+            LoadFileConfigStrategy(assets.get('home_stormpath_yaml', 'empty')),
 
             # 4. apiKey.properties file from application directory.
-            LoadAPIKeyConfigStrategy(
-                'tests/assets/no_apiKey.properties' if assets[3] else 'empty'),
+            LoadAPIKeyConfigStrategy(assets.get('app_apiKey', 'empty')),
 
-            # 5. stormpath.[json or yaml] file from application
-            #    directory.
-            LoadFileConfigStrategy(
-                'tests/assets/stormpath.json' if assets[4] else 'empty'),
+            # 5. stormpath.json file from application directory.
+            LoadFileConfigStrategy(assets.get('app_stormpath_json', 'empty')),
+
+            # 5.1. stormpath.yaml file from application directory.
+            LoadFileConfigStrategy(assets.get('app_stormpath_yaml', 'empty')),
 
             # 6. Environment variables.
-            LoadEnvConfigStrategy(prefix='STORMPATH' if assets[5] else 'empty'),
+            LoadEnvConfigStrategy(prefix=assets.get('env_prefix', 'empty')),
 
-            # 7. Configuration provided through the SDK client
-            #    constructor.
-            ExtendConfigStrategy(extend_with=self.client_config)
+            # 7. Configuration provided through the SDK client constructor.
+            ExtendConfigStrategy(extend_with=assets.get('client_config', {}))
         ]
         return load_strategies
+
+    def getConfig(self):
+        # Returns the final config.
+
+        cl = ConfigLoader(
+            self.load_strategies,
+            self.post_processing_strategies,
+            self.validation_strategies
+        )
+        return cl.load()
 
     def test_strategies_override_01(self):
         # Ensure that original config file is loaded.
 
         # Enable only the first asset.
-        load_strategies = self.setLoadingStrategies(
-            (True, False, False, False, False, False))
-        cl = ConfigLoader(
-            load_strategies,
-            self.post_processing_strategies,
-            self.validation_strategies
-        )
+        self.load_strategies = self.setLoadingStrategies({
+            'default_config': 'tests/assets/default_config.yml'
+        })
 
-        # Ensure that config file was loaded and an error was raised, since 
+        # Ensure that config file was loaded and an error was raised, since
         # our testing asset does not have apiKey credentials.
         with self.assertRaises(ValueError) as error:
-            config = cl.load()
+            self.getConfig()
         self.assertEqual(
             error.exception.message, 'API key ID and secret are required.')
 
     def test_strategies_override_02(self):
         # Ensure that apiKey.properties file from HOME directory will override
         # any settings from previous config sources.
-        pass
+
+        # Enable first two assets.
+        self.load_strategies = self.setLoadingStrategies({
+            'default_config': 'tests/assets/default_config.yml',
+            'home_apiKey': 'tests/assets/apiKey.properties'
+        })
+        config = self.getConfig()
+
+        # Ensure that default config file was properly loaded.
+        self.assertEqual(
+            config['client']['baseUrl'], 'https://api.stormpath.com/v1')
+        self.assertIsNone(config['application']['name'])
+
+        # Ensure that apiKey.properties overwrote previous api key id and
+        # secret.
+        self.assertEqual(
+            config['client']['apiKey']['id'], 'API_KEY_PROPERTIES_ID')
+        self.assertEqual(
+            config['client']['apiKey']['secret'], 'API_KEY_PROPERTIES_SECRET')
 
     def test_strategies_override_03(self):
         # Ensure that stormpath.json file from HOME stormpath directory will
         # override any settings from previous config sources.
-        pass
+
+        # Enable first three assets.
+        self.load_strategies = self.setLoadingStrategies({
+            'default_config': 'tests/assets/default_config.yml',
+            'home_apiKey': 'tests/assets/apiKey.properties',
+            'home_stormpath_json': 'tests/assets/apiKeyApiKey.json'
+        })
+        config = self.getConfig()
+
+        # Ensure that json asset overwrote previous api key id and secret.
+        self.assertEqual(
+            config['client']['apiKey']['id'], 'MY_JSON_CONFIG_API_KEY_ID')
+        self.assertEqual(
+            config['client']['apiKey']['secret'],
+            'MY_JSON_CONFIG_API_KEY_SECRET')
+        self.assertIsNone(config['client']['apiKey']['file'])
 
     def test_strategies_override_04(self):
         # Ensure that stormpath.yaml file from HOME stormpath directory will
         # override any settings from previous config sources.
-        pass
+
+        # Enable first four assets.
+        self.load_strategies = self.setLoadingStrategies({
+            'default_config': 'tests/assets/default_config.yml',
+            'home_apiKey': 'tests/assets/apiKey.properties',
+            'home_stormpath_json': 'tests/assets/apiKeyApiKey.json',
+            'home_stormpath_yaml': 'tests/assets/apiKeyFile.yml',
+        })
+        config = self.getConfig()
+
+        # Ensure that yaml asset overwrote previous api key id and secret.
+        self.assertEqual(
+            config['client']['apiKey']['id'], 'API_KEY_PROPERTIES_ID')
+        self.assertEqual(
+            config['client']['apiKey']['secret'], 'API_KEY_PROPERTIES_SECRET')
+        self.assertFalse('file' in config['client']['apiKey'])
 
     def test_strategies_override_05(self):
-        # Ensure that apiKey.properties file will override any settings from
-        # previous config sources.
-        pass
+        # Ensure that apiKey.properties file from app directory will override
+        # any settings from previous config sources.
+
+        # Enable first five assets.
+        self.load_strategies = self.setLoadingStrategies({
+            'default_config': 'tests/assets/default_config.yml',
+            'home_apiKey': 'tests/assets/apiKey.properties',
+            'home_stormpath_json': 'tests/assets/apiKeyApiKey.json',
+            'home_stormpath_yaml': 'tests/assets/apiKeyFile.yml',
+            'app_apiKey': 'tests/assets/secondary_apiKey.properties',
+        })
+        config = self.getConfig()
+
+        # Ensure that apiKey.properties asset overwrote previous api key id
+        # and secret.
+        self.assertEqual(
+            config['client']['apiKey']['id'],
+            'SECONDARY_API_KEY_PROPERTIES_ID')
+        self.assertEqual(
+            config['client']['apiKey']['secret'],
+            'SECONDARY_API_KEY_PROPERTIES_SECRET')
 
     def test_strategies_override_06(self):
         # Ensure that stormpath.json file will override any settings from
         # previous config sources.
-        pass
+
+        # Enable first six assets.
+        self.load_strategies = self.setLoadingStrategies({
+            'default_config': 'tests/assets/default_config.yml',
+            'home_apiKey': 'tests/assets/apiKey.properties',
+            'home_stormpath_json': 'tests/assets/apiKeyApiKey.json',
+            'home_stormpath_yaml': 'tests/assets/apiKeyFile.yml',
+            'app_apiKey': 'tests/assets/secondary_apiKey.properties',
+            'app_stormpath_json': 'tests/assets/stormpath.json'
+        })
+        config = self.getConfig()
+
+        # Ensure that stormpath.json asset overwrote previous settings.
+        self.assertEqual(
+            config['client']['baseUrl'], 'https://api.stormpath.com/v3')
+        self.assertEqual(config['application']['name'], 'MY_JSON_APP')
 
     def test_strategies_override_07(self):
         # Ensure that stormpath.yaml file will override any settings from
         # previous config sources.
-        pass
+
+        # Enable first seven assets.
+        self.load_strategies = self.setLoadingStrategies({
+            'default_config': 'tests/assets/default_config.yml',
+            'home_apiKey': 'tests/assets/apiKey.properties',
+            'home_stormpath_json': 'tests/assets/apiKeyApiKey.json',
+            'home_stormpath_yaml': 'tests/assets/apiKeyFile.yml',
+            'app_apiKey': 'tests/assets/secondary_apiKey.properties',
+            'app_stormpath_json': 'tests/assets/stormpath.json',
+            'app_stormpath_yaml': 'tests/assets/stormpath.yml',
+        })
+        config = self.getConfig()
+
+        # Ensure that stormpath.yaml asset overwrote previous settings.
+        self.assertEqual(
+            config['client']['baseUrl'], 'https://api.stormpath.com/v2')
+        self.assertEqual(config['application']['name'], 'MY_APP')
 
     def test_strategies_override_08(self):
         # Ensure that stormpath environment variables will override any
         # settings from previous config sources.
-        pass
+
+        # Enable first eight assets.
+        self.load_strategies = self.setLoadingStrategies({
+            'default_config': 'tests/assets/default_config.yml',
+            'home_apiKey': 'tests/assets/apiKey.properties',
+            'home_stormpath_json': 'tests/assets/apiKeyApiKey.json',
+            'home_stormpath_yaml': 'tests/assets/apiKeyFile.yml',
+            'app_apiKey': 'tests/assets/secondary_apiKey.properties',
+            'app_stormpath_json': 'tests/assets/stormpath.json',
+            'app_stormpath_yaml': 'tests/assets/stormpath.yml',
+            'env_prefix': 'STORMPATH'
+        })
+        environ['STORMPATH_APPLICATION_NAME'] = 'MY_ENVIRON_APP'
+        config = self.getConfig()
+
+        # Ensure that stormpath environment variables overwrote previous
+        # settings.
+        self.assertEqual(config['application']['name'], 'MY_ENVIRON_APP')
 
     def test_strategies_override_09(self):
         # Ensure that client constructor settings will override any settings
         # from previous config sources.
-        pass
+
+        # Enable all assets.
+        self.load_strategies = self.setLoadingStrategies({
+            'default_config': 'tests/assets/default_config.yml',
+            'home_apiKey': 'tests/assets/apiKey.properties',
+            'home_stormpath_json': 'tests/assets/apiKeyApiKey.json',
+            'home_stormpath_yaml': 'tests/assets/apiKeyFile.yml',
+            'app_apiKey': 'tests/assets/secondary_apiKey.properties',
+            'app_stormpath_json': 'tests/assets/stormpath.json',
+            'app_stormpath_yaml': 'tests/assets/stormpath.yml',
+            'env_prefix': 'STORMPATH',
+            'client_config': {
+                'application': {
+                    'name': 'CLIENT_CONFIG_APP'
+                }
+            }
+        })
+        config = self.getConfig()
+
+        # Ensure that client config asset overwrote previous settings.
+        self.assertEqual(config['application']['name'], 'CLIENT_CONFIG_APP')
