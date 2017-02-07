@@ -3,17 +3,17 @@
 
 from os import environ
 from unittest import TestCase
-
 from mock import patch
-
 from stormpath_config.loader import ConfigLoader
-from stormpath_config.strategies import ExtendConfigStrategy, \
-    LoadAPIKeyConfigStrategy, \
-    LoadAPIKeyFromConfigStrategy, \
-    LoadEnvConfigStrategy, \
-    LoadFileConfigStrategy, \
-    ValidateClientConfigStrategy, \
+from stormpath_config.strategies import (
+    ExtendConfigStrategy,
+    LoadAPIKeyConfigStrategy,
+    LoadAPIKeyFromConfigStrategy,
+    LoadEnvConfigStrategy,
+    LoadFileConfigStrategy,
+    ValidateClientConfigStrategy,
     MoveAPIKeyToClientAPIKeyStrategy
+)
 
 
 class ConfigLoaderTest(TestCase):
@@ -33,7 +33,8 @@ class ConfigLoaderTest(TestCase):
 
         self.load_strategies = [
             # 1. Default configuration.
-            LoadFileConfigStrategy('tests/assets/default_config.yml', must_exist=True),
+            LoadFileConfigStrategy(
+                'tests/assets/default_config.yml', must_exist=True),
 
             # 2. apiKey.properties file from ~/.stormpath directory.
             LoadAPIKeyConfigStrategy('tests/assets/apiKey.properties'),
@@ -78,13 +79,22 @@ class ConfigLoaderTest(TestCase):
         'STORMPATH_APPLICATION_NAME': 'My app',
     })
     def test_config_loader(self):
-        cl = ConfigLoader(self.load_strategies, self.post_processing_strategies, self.validation_strategies)
+        cl = ConfigLoader(
+            self.load_strategies,
+            self.post_processing_strategies,
+            self.validation_strategies
+        )
         config = cl.load()
 
-        self.assertEqual(config['client']['apiKey']['id'], 'CLIENT_CONFIG_API_KEY_ID')
-        self.assertEqual(config['client']['apiKey']['secret'], 'CLIENT_CONFIG_API_KEY_SECRET')
-        self.assertEqual(config['client']['cacheManager']['defaultTtl'], 302)
-        self.assertEqual(config['client']['cacheManager']['defaultTti'], 303)
+        self.assertEqual(
+            config['client']['apiKey']['id'], 'CLIENT_CONFIG_API_KEY_ID')
+        self.assertEqual(
+            config['client']['apiKey']['secret'],
+            'CLIENT_CONFIG_API_KEY_SECRET')
+        self.assertEqual(
+            config['client']['cacheManager']['defaultTtl'], 302)
+        self.assertEqual(
+            config['client']['cacheManager']['defaultTti'], 303)
         self.assertEqual(config['application']['name'], 'CLIENT_CONFIG_APP')
 
     def test_stormpath_key_loader(self):
