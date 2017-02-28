@@ -98,20 +98,6 @@ class ConfigLoaderTest(TestCase):
             config['client']['cacheManager']['defaultTti'], 303)
         self.assertEqual(config['application']['name'], 'CLIENT_CONFIG_APP')
 
-    def test_stormpath_key_loader(self):
-        self.client_config['application']['name'] = 'STORMPATH_KEY_APP'
-        self.load_strategies[6] = ExtendConfigStrategy(
-            extend_with={'stormpath': self.client_config})
-        cl = ConfigLoader(
-            self.load_strategies,
-            self.post_processing_strategies,
-            self.validation_strategies
-        )
-        config = cl.load()
-
-        self.assertEqual(config['application']['name'], 'STORMPATH_KEY_APP')
-        self.assertFalse('stormpath' in config)
-
 
 class OverridingStrategiesTest(TestCase):
     """

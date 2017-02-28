@@ -1,8 +1,9 @@
 from unittest import TestCase
-from stormpath_config.strategies import MoveStormpathSettingsToStormpathConfig
+from stormpath_config.strategies import (
+    MoveStormpathSettingsToStormpathConfigStrategy)
 
 
-class MoveStormpathSettingsToStormpathConfigTest(TestCase):
+class MoveStormpathSettingsToStormpathConfigStrategyTest(TestCase):
     def setUp(self):
         stormpath_config = {
             'client': {
@@ -29,7 +30,7 @@ class MoveStormpathSettingsToStormpathConfigTest(TestCase):
         """
         self.config['STORMPATH_BASE_TEMPLATE'] = 'flask_stormpath/base.html'
 
-        move_stormpath_settings = MoveStormpathSettingsToStormpathConfig()
+        move_stormpath_settings = MoveStormpathSettingsToStormpathConfigStrategy()
         move_stormpath_settings.process(self.config)
 
         self.assertEqual(
@@ -43,7 +44,7 @@ class MoveStormpathSettingsToStormpathConfigTest(TestCase):
         """
         self.config['STORMPATH_ENABLE_FACEBOOK'] = False
 
-        move_stormpath_settings = MoveStormpathSettingsToStormpathConfig()
+        move_stormpath_settings = MoveStormpathSettingsToStormpathConfigStrategy()
         move_stormpath_settings.process(self.config)
 
         self.assertEqual(
@@ -65,7 +66,7 @@ class MoveStormpathSettingsToStormpathConfigTest(TestCase):
         """
         self.config['STORMPATH_FOO'] = 'bar'
 
-        move_stormpath_settings = MoveStormpathSettingsToStormpathConfig()
+        move_stormpath_settings = MoveStormpathSettingsToStormpathConfigStrategy()
         move_stormpath_settings.process(self.config)
 
         self.assertNotIn('foo', self.config['stormpath'])
@@ -76,7 +77,7 @@ class MoveStormpathSettingsToStormpathConfigTest(TestCase):
         """
         self.config['FOO'] = 'bar'
 
-        move_stormpath_settings = MoveStormpathSettingsToStormpathConfig()
+        move_stormpath_settings = MoveStormpathSettingsToStormpathConfigStrategy()
         move_stormpath_settings.process(self.config)
 
         self.assertNotIn('foo', self.config['stormpath'])
@@ -92,7 +93,7 @@ class MoveStormpathSettingsToStormpathConfigTest(TestCase):
         self.config['STORMPATH_BASE_TEMPLATE'] = 'flask_stormpath/base.html'
         self.config['STORMPATH_ENABLE_FACEBOOK'] = False
 
-        move_stormpath_settings = MoveStormpathSettingsToStormpathConfig()
+        move_stormpath_settings = MoveStormpathSettingsToStormpathConfigStrategy()
         move_stormpath_settings.process(self.config)
 
         self.assertEqual(
@@ -110,7 +111,7 @@ class MoveStormpathSettingsToStormpathConfigTest(TestCase):
         self.config['STORMPATH_BASE_TEMPLATE'] = 'flask_stormpath/base.html'
         self.config.pop('stormpath')
 
-        move_stormpath_settings = MoveStormpathSettingsToStormpathConfig()
+        move_stormpath_settings = MoveStormpathSettingsToStormpathConfigStrategy()
         move_stormpath_settings.process(self.config)
 
         self.assertEqual(
@@ -125,7 +126,7 @@ class MoveStormpathSettingsToStormpathConfigTest(TestCase):
         self.config[
             'STORMPATH_API_KEY_FILE'] = 'tests/assets/apiKey.properties'
 
-        move_stormpath_settings = MoveStormpathSettingsToStormpathConfig()
+        move_stormpath_settings = MoveStormpathSettingsToStormpathConfigStrategy()
         move_stormpath_settings.process(self.config)
 
         self.assertEqual(
@@ -142,7 +143,7 @@ class MoveStormpathSettingsToStormpathConfigTest(TestCase):
         # Ensure that application name is stored as name.
         self.config['STORMPATH_APPLICATION'] = 'app_name'
 
-        move_stormpath_settings = MoveStormpathSettingsToStormpathConfig()
+        move_stormpath_settings = MoveStormpathSettingsToStormpathConfigStrategy()
         move_stormpath_settings.process(self.config)
 
         self.assertEqual(
@@ -152,7 +153,7 @@ class MoveStormpathSettingsToStormpathConfigTest(TestCase):
         self.config['STORMPATH_APPLICATION'] = (
             'https://api.stormpath.com/v1/applications/foobar')
 
-        move_stormpath_settings = MoveStormpathSettingsToStormpathConfig()
+        move_stormpath_settings = MoveStormpathSettingsToStormpathConfigStrategy()
         move_stormpath_settings.process(self.config)
 
         self.assertEqual(

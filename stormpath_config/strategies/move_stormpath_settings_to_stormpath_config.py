@@ -2,7 +2,7 @@ from ..helpers import _extend_dict
 from .load_apikey_from_config import LoadAPIKeyFromConfigStrategy
 
 
-class MoveStormpathSettingsToStormpathConfig(object):
+class MoveStormpathSettingsToStormpathConfigStrategy(object):
     """
     Checks the outer config and retrieves values whose keys start with
     'STORMPATH' prefix, and stores them in the configuration object properly.
@@ -53,7 +53,7 @@ class MoveStormpathSettingsToStormpathConfig(object):
 
                 # Check the format of application information.
                 if stormpath_key == 'application':
-                    if 'https://api.stormpath.com/v1/applications' in value:
+                    if 'http' in value:
                         stormpath_key = 'application*href'
                     else:
                         stormpath_key = 'application*name'
