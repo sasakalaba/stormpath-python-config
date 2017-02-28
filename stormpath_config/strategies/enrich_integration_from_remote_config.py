@@ -1,5 +1,7 @@
 from datetime import timedelta
 
+from stormpath_config.errors import ConfigurationError
+from enrich_client_from_remote_config import _resolve_application_by_name
 from ..helpers import _extend_dict, to_camel_case
 
 
@@ -162,6 +164,99 @@ class EnrichIntegrationFromRemoteConfigStrategy(object):
     def __init__(self, client_factory):
         self.client_factory = client_factory
 
+    def social_enabled_and_empty(self, config):
+        if not config or not isinstance(config, dict):
+            return False
+        return config.get('enabled') and not all([
+            config.get('clientId'),
+            config.get('clientSecret')
+        ])
+
+    def validate(self, config):
+        """
+        Ensure the user-specified settings are valid.
+        This will raise a ConfigurationError if anything mandatory is not
+        specified.
+
+        :param dict config: The Flask app config.
+        """
+        client = self.client_factory(config)
+
+        # Check if application information is present.
+        application = config.get('application')
+        if not application:
+            raise ConfigurationError('Application cannot be empty.')
+
+        href = application.get('href')
+        name = application.get('name')
+
+        if href:
+            if '/applications/' not in href:
+                raise ConfigurationError(
+                    'Application HREF "%s" is not a valid Stormpath ' % href +
+                    'Application HREF.'
+                )
+        elif name:
+            href = _resolve_application_by_name(client, config, name)
+        else:
+            raise ConfigurationError(
+                'You must specify application name or href.')
+        application = client.applications.get(href)
+
+
+        # Check if google social information is present.
+        google_config = config['web']['social'].get('google')
+
+        if not google_config or self.social_enabled_and_empty(google_config):
+            raise ConfigurationError(
+                'You must define your Google app settings.')
+
+        # Check if facebook social information is present.
+        facebook_config = config['web']['social'].get('facebook')
+
+        if not facebook_config or self.social_enabled_and_empty(facebook_config):
+            raise ConfigurationError(
+                'You must define your Facebook app settings.')
+
+        # Check if default account store is present.
+        if (
+                config['web']['register']['enabled'] and
+                not application.default_account_store_mapping):
+            raise ConfigurationError(
+                "No default account store is mapped to the specified "
+                "application. A default account store is required for "
+                "registration.")
+
+        # Ensure that autologin and verify email cannot be active at the same
+        # time.
+        if all([config['web']['register']['autoLogin'],
+                config['web']['verifyEmail']['enabled']]):
+            raise ConfigurationError(
+                "Invalid configuration: stormpath.web.register.autoLogin "
+                "is true, but the default account store of the "
+                "specified application has the email verification "
+                "workflow enabled. Auto login is only possible if email "
+                "verification is disabled. "
+                "Please disable this workflow on this application's default "
+                "account store.")
+
+        # Check if cookie information is present.
+        cookie = config.get('cookie')
+
+        # Check cookie settings.
+        if not cookie or not isinstance(cookie, dict):
+            raise ConfigurationError('Cookie settings cannot be empty.')
+
+        # Check cookie domain.
+        if cookie.get('domain') and not isinstance(
+                config['cookie']['domain'], str):
+            raise ConfigurationError('Cookie domain must be a string.')
+
+        # Check cookie duration.
+        if cookie.get('duration') and not isinstance(
+                config['cookie']['duration'], timedelta):
+            raise ConfigurationError('Cookie duration must be a string.')
+
     def process(self, config):
         if config.get('skipRemoteConfig'):
             return config
@@ -179,4 +274,5 @@ class EnrichIntegrationFromRemoteConfigStrategy(object):
             if policy_config:
                 _extend_dict(config, policy_config)
 
+        self.validate(config)
         return config
