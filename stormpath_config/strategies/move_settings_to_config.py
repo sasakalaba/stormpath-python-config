@@ -2,7 +2,7 @@ from ..helpers import _extend_dict
 from .load_apikey_from_config import LoadAPIKeyFromConfigStrategy
 
 
-class MoveStormpathSettingsToStormpathConfigStrategy(object):
+class MoveSettingsToConfigStrategy(object):
     """
     Checks the outer config and retrieves values whose keys start with
     'STORMPATH' prefix, and stores them in the configuration object properly.

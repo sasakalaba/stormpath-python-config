@@ -1,4 +1,3 @@
-from .helpers import _extend_dict
 
 
 """Configuration Loader."""

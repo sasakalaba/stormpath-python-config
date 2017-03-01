@@ -10,4 +10,4 @@ from .load_file_config import LoadFileConfigStrategy
 from .load_file_path import LoadFilePathStrategy
 from .validate_client_config import ValidateClientConfigStrategy
 from .move_apikey_to_client import MoveAPIKeyToClientAPIKeyStrategy
-from .move_stormpath_settings_to_stormpath_config import MoveStormpathSettingsToStormpathConfigStrategy
+from .move_settings_to_config import MoveSettingsToConfigStrategy
