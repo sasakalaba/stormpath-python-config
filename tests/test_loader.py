@@ -12,7 +12,8 @@ from stormpath_config.strategies import (
     LoadEnvConfigStrategy,
     LoadFileConfigStrategy,
     ValidateClientConfigStrategy,
-    MoveAPIKeyToClientAPIKeyStrategy
+    MoveAPIKeyToClientAPIKeyStrategy,
+    MoveSettingsToConfigStrategy
 )
 
 
@@ -142,7 +143,10 @@ class OverridingStrategiesTest(TestCase):
             LoadEnvConfigStrategy(prefix=assets.get('env_prefix', 'empty')),
 
             # 7. Configuration provided through the SDK client constructor.
-            ExtendConfigStrategy(extend_with=assets.get('client_config', {}))
+            ExtendConfigStrategy(extend_with=assets.get('client_config', {})),
+
+            # 8. Configuration provided 'STORMPATH' prefix in outer config.
+            MoveSettingsToConfigStrategy(config=assets.get('outer_config', {}))
         ]
         return load_strategies
 
@@ -344,3 +348,33 @@ class OverridingStrategiesTest(TestCase):
 
         # Ensure that client config asset overwrote previous settings.
         self.assertEqual(config['application']['name'], 'CLIENT_CONFIG_APP')
+
+    def test_strategies_override_10(self):
+        # Ensure that settings from outer config with 'STORMPATH' prefix will
+        # override any settings from previous config sources.
+
+        # Enable all assets.
+        self.load_strategies = self.setLoadingStrategies({
+            'default_config': 'tests/assets/default_config.yml',
+            'home_apiKey': 'tests/assets/apiKey.properties',
+            'home_stormpath_json': 'tests/assets/apiKeyApiKey.json',
+            'home_stormpath_yaml': 'tests/assets/apiKeyFile.yml',
+            'app_apiKey': 'tests/assets/secondary_apiKey.properties',
+            'app_stormpath_json': 'tests/assets/stormpath.json',
+            'app_stormpath_yaml': 'tests/assets/stormpath.yml',
+            'env_prefix': 'STORMPATH',
+            'client_config': {
+                'application': {
+                    'name': 'CLIENT_CONFIG_APP'
+                }
+            },
+            'outer_config': {
+                'STORMPATH_BASE_TEMPLATE': 'stormpath_base_template',
+                'STORMPATH_APPLICATION': 'OUTER_STORMPATH_APP'
+            }
+        })
+        config = self.getConfig()
+
+        # Ensure that outer config asset overwrote previous settings.
+        self.assertEqual(config['base_template'], 'stormpath_base_template')
+        self.assertEqual(config['application']['name'], 'OUTER_STORMPATH_APP')

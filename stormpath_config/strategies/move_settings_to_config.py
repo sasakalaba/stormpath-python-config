@@ -1,5 +1,4 @@
 from ..helpers import _extend_dict
-from .load_apikey_from_config import LoadAPIKeyFromConfigStrategy
 
 
 class MoveSettingsToConfigStrategy(object):
@@ -23,6 +22,9 @@ class MoveSettingsToConfigStrategy(object):
         'COOKIE_DOMAIN': 'cookie*domain',
         'COOKIE_DURATION': 'cookie*duration',
     }
+
+    def __init__(self, config={}):
+        self.config = config
 
     def set_key(self, config, key, value):
         """
@@ -61,18 +63,13 @@ class MoveSettingsToConfigStrategy(object):
                 if stormpath_key:
                     self.set_key(updated_config, stormpath_key, value)
 
-        if 'STORMPATH_API_KEY_FILE' in config.keys():
-            load_api_from_config = LoadAPIKeyFromConfigStrategy()
-            load_api_from_config.process(updated_config)
-
         return updated_config
 
     def process(self, config=None):
         if config is None:
             config = {}
 
-        if config.get('stormpath'):
-            updated_config = self.get_updated_config(config)
-            _extend_dict(config['stormpath'], updated_config)
+        updated_config = self.get_updated_config(self.config)
+        _extend_dict(config, updated_config)
 
         return config
