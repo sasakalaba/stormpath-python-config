@@ -54,4 +54,4 @@ class MoveAPIKeyToClientAPIKeyStrategyTest(TestCase):
         with self.assertRaises(Exception) as error:
             self.generateConfig(client_config=client_config)
         self.assertEqual(
-            error.exception.message, 'Unable to load apiKey id and secret.')
+            str(error.exception), 'Unable to load apiKey id and secret.')

@@ -173,7 +173,7 @@ class OverridingStrategiesTest(TestCase):
         with self.assertRaises(ValueError) as error:
             self.getConfig()
         self.assertEqual(
-            error.exception.message, 'API key ID and secret are required.')
+            str(error.exception), 'API key ID and secret are required.')
 
     def test_strategies_override_02(self):
         # Ensure that apiKey.properties file from HOME directory will override

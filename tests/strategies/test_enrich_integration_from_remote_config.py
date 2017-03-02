@@ -129,7 +129,7 @@ class ValidateTest(EnrichIntegrationFromRemoteConfigStrategyTest):
         with self.assertRaises(ConfigurationError) as error:
             self.ecfrcs.validate(self.config)
         self.assertEqual(
-            error.exception.message,
+            str(error.exception),
             'Application HREF "https://api.stormpath.com/v1/a" is not a ' +
             'valid Stormpath Application HREF.')
 
@@ -138,14 +138,14 @@ class ValidateTest(EnrichIntegrationFromRemoteConfigStrategyTest):
         with self.assertRaises(ConfigurationError) as error:
             self.ecfrcs.validate(self.config)
         self.assertEqual(
-            error.exception.message, 'Application cannot be empty.')
+            str(error.exception), 'Application cannot be empty.')
 
         # No application settings.
         self.config.pop('application')
         with self.assertRaises(ConfigurationError) as error:
             self.ecfrcs.validate(self.config)
         self.assertEqual(
-            error.exception.message, 'Application cannot be empty.')
+            str(error.exception), 'Application cannot be empty.')
 
         # Ensure that we can resolve application by name.
         self.config['application'] = {'name': 'My named application'}
@@ -162,7 +162,7 @@ class ValidateTest(EnrichIntegrationFromRemoteConfigStrategyTest):
         with self.assertRaises(ConfigurationError) as error:
             self.ecfrcs.validate(self.config)
         self.assertEqual(
-            error.exception.message,
+            str(error.exception),
             'You must define your Google app settings.'
         )
 
@@ -171,7 +171,7 @@ class ValidateTest(EnrichIntegrationFromRemoteConfigStrategyTest):
         with self.assertRaises(ConfigurationError) as error:
             self.ecfrcs.validate(self.config)
         self.assertEqual(
-            error.exception.message,
+            str(error.exception),
             'You must define your Google app settings.'
         )
 
@@ -180,7 +180,7 @@ class ValidateTest(EnrichIntegrationFromRemoteConfigStrategyTest):
         with self.assertRaises(ConfigurationError) as error:
             self.ecfrcs.validate(self.config)
         self.assertEqual(
-            error.exception.message,
+            str(error.exception),
             'You must define your Google app settings.'
         )
 
@@ -198,7 +198,7 @@ class ValidateTest(EnrichIntegrationFromRemoteConfigStrategyTest):
         with self.assertRaises(ConfigurationError) as error:
             self.ecfrcs.validate(self.config)
         self.assertEqual(
-            error.exception.message,
+            str(error.exception),
             'You must define your Facebook app settings.'
         )
 
@@ -207,7 +207,7 @@ class ValidateTest(EnrichIntegrationFromRemoteConfigStrategyTest):
         with self.assertRaises(ConfigurationError) as error:
             self.ecfrcs.validate(self.config)
         self.assertEqual(
-            error.exception.message,
+            str(error.exception),
             'You must define your Facebook app settings.'
         )
 
@@ -216,7 +216,7 @@ class ValidateTest(EnrichIntegrationFromRemoteConfigStrategyTest):
         with self.assertRaises(ConfigurationError) as error:
             self.ecfrcs.validate(self.config)
         self.assertEqual(
-            error.exception.message,
+            str(error.exception),
             'You must define your Facebook app settings.'
         )
 
@@ -225,7 +225,7 @@ class ValidateTest(EnrichIntegrationFromRemoteConfigStrategyTest):
         with self.assertRaises(ConfigurationError) as error:
             self.ecfrcs.validate(self.config)
         self.assertEqual(
-            error.exception.message,
+            str(error.exception),
             'You must define your Facebook app settings.'
         )
 
@@ -241,21 +241,21 @@ class ValidateTest(EnrichIntegrationFromRemoteConfigStrategyTest):
         with self.assertRaises(ConfigurationError) as error:
             self.ecfrcs.validate(self.config)
         self.assertEqual(
-            error.exception.message, 'Cookie settings cannot be empty.')
+            str(error.exception), 'Cookie settings cannot be empty.')
 
         # Empty cookie settings.
         self.config['cookie'] = {}
         with self.assertRaises(ConfigurationError) as error:
             self.ecfrcs.validate(self.config)
         self.assertEqual(
-            error.exception.message, 'Cookie settings cannot be empty.')
+            str(error.exception), 'Cookie settings cannot be empty.')
 
         # Invalid cookie domain.
         self.config['cookie'] = {'domain': 55}
         with self.assertRaises(ConfigurationError) as error:
             self.ecfrcs.validate(self.config)
         self.assertEqual(
-            error.exception.message, 'Cookie domain must be a string.')
+            str(error.exception), 'Cookie domain must be a string.')
 
         # Invalid cookie duration.
         self.config['cookie'] = {
@@ -266,7 +266,7 @@ class ValidateTest(EnrichIntegrationFromRemoteConfigStrategyTest):
         with self.assertRaises(ConfigurationError) as error:
             self.ecfrcs.validate(self.config)
         self.assertEqual(
-            error.exception.message, 'Cookie duration must be a string.')
+            str(error.exception), 'Cookie duration must be a string.')
 
         # Now that we've configured things properly, it should work.
         self.config['cookie'] = {
@@ -286,7 +286,7 @@ class ValidateTest(EnrichIntegrationFromRemoteConfigStrategyTest):
         with self.assertRaises(ConfigurationError) as error:
             self.ecfrcs.validate(self.config)
         self.assertEqual(
-            error.exception.message,
+            str(error.exception),
             'Invalid configuration: stormpath.web.register.autoLogin is' +
             ' true, but the default account store of the specified' +
             ' application has the email verification workflow enabled.' +
@@ -306,7 +306,7 @@ class ValidateTest(EnrichIntegrationFromRemoteConfigStrategyTest):
         with self.assertRaises(ConfigurationError) as error:
             self.ecfrcs.validate(self.config)
         self.assertEqual(
-            error.exception.message,
+            str(error.exception),
             'No default account store is mapped to the specified ' +
             'application. A default account store is required for ' +
             'registration.'

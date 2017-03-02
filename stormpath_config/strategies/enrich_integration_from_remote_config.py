@@ -1,7 +1,7 @@
 from datetime import timedelta
 
 from stormpath_config.errors import ConfigurationError
-from enrich_client_from_remote_config import _resolve_application_by_name
+from .enrich_client_from_remote_config import _resolve_application_by_name
 from ..helpers import _extend_dict, to_camel_case
 
 
